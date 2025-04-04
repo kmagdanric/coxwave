@@ -1,0 +1,49 @@
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - 3306:3306
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "--protocol", "tcp"]
+      # 컨테이너가 시작하면 0.1초(interval) 대기하고 연결 시도를 한다
+      # 0.1초(timeout) 기다려보고 실패하면 다시 interval만큼 기다리고 재시도 하는 것을 100회 반복
+      # 모든 retry 후에도 (소요시간: 20s) 실패하면 check도 실패함
+      interval: 0.1s
+      timeout: 0.1s
+      retries: 100
+    tmpfs:
+      - /var/lib/mysql
+    volumes:
+      - ../mysql/:/docker-entrypoint-initdb.d:ro
+
+  redis:
+    image: redis:7.2
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 0.1s
+      timeout: 0.1s
+      retries: 100
+
+  server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=coxwave
+      - DB_PASSWORD=coxwavewave
+      - DB_NAME=coupons
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379

@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package couponpb;
+
+option go_package = "coupons/proto;couponpb";
+
+import "google/protobuf/timestamp.proto";
+
+// CouponService defines the coupon issuance service.
+service CouponService {
+  // CreateCampaign creates a new coupon campaign.
+  rpc CreateCampaign(CreateCampaignRequest) returns (CreateCampaignResponse);
+
+  // GetCampaign retrieves campaign details and issued coupon codes.
+  rpc GetCampaign(GetCampaignRequest) returns (GetCampaignResponse);
+  
+  // IssueCoupon issues a coupon for a given campaign.
+  rpc IssueCoupon(IssueCouponRequest) returns (IssueCouponResponse);
+}
+
+// Request message for creating a campaign.
+message CreateCampaignRequest {
+  string name = 1;
+  google.protobuf.Timestamp start_time = 2;
+  int64 total_coupons = 3;
+}
+
+// Response message after creating a campaign.
+message CreateCampaignResponse {
+  int64 campaign_id = 1;
+}
+
+// Request message to get campaign details.
+message GetCampaignRequest {
+  int64 campaign_id = 1;
+}
+
+// A campaign message that includes basic campaign details.
+message Campaign {
+  int64 id = 1;
+  string name = 2;
+  google.protobuf.Timestamp start_time = 3;
+  int64 total_coupons = 4;
+}
+
+// Response message for GetCampaign.
+message GetCampaignResponse {
+  Campaign campaign = 1;
+  repeated string coupon_codes = 2;
+}
+
+// Request message for issuing a coupon.
+message IssueCouponRequest {
+  int64 campaign_id = 1;
+}
+
+// Response message after a coupon is issued.
+message IssueCouponResponse {
+  string coupon_code = 1;
+}

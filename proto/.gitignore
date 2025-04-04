@@ -1,0 +1,3 @@
+# ignore generated proto file
+coupon.pb.go
+couponpbconnect/

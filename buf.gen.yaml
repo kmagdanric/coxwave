@@ -1,0 +1,9 @@
+version: v1
+plugins:
+  # Go code generation
+  - plugin: go
+    out: .
+    opt: paths=source_relative
+  - plugin: connect-go
+    out: .
+    opt: paths=source_relative
