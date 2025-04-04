@@ -2,11 +2,12 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/binary"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"os"
 	"strings"
@@ -87,36 +88,60 @@ func generateCouponCode(campaignID int64) string {
 	// Create a unique seed combining:
 	// 1. Campaign ID
 	// 2. Current nano time
-	// 3. Counter within the nanosecond (using atomic increment)
+	// 3. Random bytes from crypto/rand
 	timestamp := time.Now().UnixNano()
+	randomBytes := make([]byte, 8)
+	if _, err := rand.Read(randomBytes); err != nil {
+		// Fallback to timestamp-based randomness if crypto/rand fails
+		randomBytes = []byte(fmt.Sprintf("%d", timestamp))
+	}
 
-	data := make([]byte, 16)
+	data := make([]byte, 24) // Increased size for more entropy
 	binary.BigEndian.PutUint64(data[0:8], uint64(campaignID))
 	binary.BigEndian.PutUint64(data[8:16], uint64(timestamp))
+	copy(data[16:], randomBytes)
 	
 	hash := sha256.Sum256(data)
 	
-	rnd := rand.New(rand.NewSource(int64(binary.BigEndian.Uint64(hash[:]))))
-	
 	var sb strings.Builder
 
+	// Use crypto/rand for Korean characters
 	for i := 0; i < 2; i++ {
-		idx := rnd.Intn(len(koreanSyllables))
-		sb.WriteRune(koreanSyllables[idx])
+		idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(koreanSyllables))))
+		if err != nil {
+			// Fallback to hash-based selection
+			idx = big.NewInt(int64(hash[i] % uint8(len(koreanSyllables))))
+		}
+		sb.WriteRune(koreanSyllables[idx.Int64()])
 	}
 
+	// Use crypto/rand for numbers
 	for i := 0; i < 4; i++ {
-		num := hash[i] % 10
+		num, err := rand.Int(rand.Reader, big.NewInt(10))
+		if err != nil {
+			// Fallback to hash-based selection
+			num = big.NewInt(int64(hash[i] % 10))
+		}
 		sb.WriteString(fmt.Sprintf("%d", num))
 	}
 
+	// Use crypto/rand for Korean characters
 	for i := 0; i < 2; i++ {
-		idx := rnd.Intn(len(koreanSyllables))
-		sb.WriteRune(koreanSyllables[idx])
+		idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(koreanSyllables))))
+		if err != nil {
+			// Fallback to hash-based selection
+			idx = big.NewInt(int64(hash[i+4] % uint8(len(koreanSyllables))))
+		}
+		sb.WriteRune(koreanSyllables[idx.Int64()])
 	}
 
+	// Use crypto/rand for numbers
 	for i := 0; i < 2; i++ {
-		num := hash[i+4] % 10
+		num, err := rand.Int(rand.Reader, big.NewInt(10))
+		if err != nil {
+			// Fallback to hash-based selection
+			num = big.NewInt(int64(hash[i+6] % 10))
+		}
 		sb.WriteString(fmt.Sprintf("%d", num))
 	}
 

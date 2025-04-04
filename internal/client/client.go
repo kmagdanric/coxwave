@@ -14,13 +14,13 @@ import (
 
 // Client wraps the coupon service client
 type Client struct {
-	client couponpbconnect.CouponServiceClient
+	Client couponpbconnect.CouponServiceClient
 }
 
 // New creates a new Client instance
 func New(baseURL string) (*Client, error) {
 	return &Client{
-		client: couponpbconnect.NewCouponServiceClient(
+		Client: couponpbconnect.NewCouponServiceClient(
 			http.DefaultClient,
 			baseURL,
 		),
@@ -35,7 +35,7 @@ func (c *Client) CreateCampaign(ctx context.Context, name string, startTime time
 		TotalCoupons: totalCoupons,
 	})
 
-	resp, err := c.client.CreateCampaign(ctx, req)
+	resp, err := c.Client.CreateCampaign(ctx, req)
 	if err != nil {
 		return 0, err
 	}
@@ -48,7 +48,7 @@ func (c *Client) GetCampaign(ctx context.Context, campaignID int64) (*couponpb.C
 		CampaignId: campaignID,
 	})
 
-	resp, err := c.client.GetCampaign(ctx, req)
+	resp, err := c.Client.GetCampaign(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (c *Client) IssueCoupon(ctx context.Context, campaignID int64) (string, err
 		CampaignId: campaignID,
 	})
 
-	resp, err := c.client.IssueCoupon(ctx, req)
+	resp, err := c.Client.IssueCoupon(ctx, req)
 	if err != nil {
 		return "", err
 	}
